@@ -47,7 +47,8 @@ import java.util.Map;
  */
 public class Servidor {
 
-    private static final int PORTA = 8080;
+    private static final int PORTA = Integer.parseInt(
+            System.getenv().getOrDefault("PORT", "8080"));
     private static final Path WEB_DIR = Paths.get("./web").toAbsolutePath().normalize();
 
     private static UsuarioDAO usuarioDAO;

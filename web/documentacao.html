@@ -921,7 +921,72 @@ reinsere todos os pares <code>(nome, id)</code>. <code>FavoritoDAO</code> faz o 
 os dois índices Hash do N:N.</p>
 
 <!-- ================================================================ -->
-<h2>20. Referências</h2>
+<!-- FASE IV -->
+<h2>20. Fase IV — Compressão de Dados (Huffman e LZW)</h2>
+
+<h3>20.1 Objetivo</h3>
+<p>A Fase IV aplica <strong>compressão de dados</strong> a todos os arquivos de <code>./dados/</code>,
+gerando um <strong>único arquivo compactado</strong> que funciona como backup completo do sistema.
+Dois algoritmos clássicos foram implementados do zero, sem uso de bibliotecas externas de compressão.</p>
+
+<h3>20.2 Arquitetura de Compressão</h3>
+<p>O processo segue dois passos sequenciais:</p>
+<ol>
+  <li><strong>Empacotamento (TAR):</strong> <code>app.compression.Backup</code> percorre recursivamente
+  <code>./dados/</code> e serializa cada arquivo no formato
+  <code>[assinatura 6B] [quantidade: int] {[tamNome: short][nome UTF-8][tamConteúdo: long][bytes]…}</code>.
+  O resultado é um único <code>byte[]</code> (o pacote).</li>
+  <li><strong>Compressão:</strong> o pacote inteiro é comprimido por Huffman ou LZW, gerando o
+  arquivo final em <code>./backups/</code>. Um cabeçalho próprio identifica o algoritmo e grava o
+  tamanho original para verificação.</li>
+</ol>
+
+<h3>20.3 Algoritmo de Huffman</h3>
+<p>Implementado em <code>app.compression.Huffman</code>. O algoritmo conta a frequência de cada
+byte (0–255), constrói uma árvore binária mínima via fila de prioridade e atribui códigos de
+comprimento variável: bytes frequentes recebem códigos curtos. O fluxo comprimido carrega:</p>
+<pre><code>[tamanhoOriginal: int]
+[símbolosDistintos: int]
+{ [byte símbolo] [long frequência] } * símbolosDistintos
+[bits empacotados: byte[]]</code></pre>
+<p>Na descompressão, a mesma tabela de frequências reconstrói a árvore deterministicamente.
+Caso de borda tratado: arquivo com um único byte distinto (raiz é folha, código = "0").</p>
+
+<h3>20.4 Algoritmo LZW</h3>
+<p>Implementado em <code>app.compression.LZW</code>. O dicionário começa com as 256 entradas de
+byte único e cresce dinamicamente. Cada código emitido tem <strong>16 bits</strong>. O dicionário
+para de crescer em 65.536 entradas — compressor e descompressor param exatamente no mesmo
+ponto, garantindo sincronismo sem transmitir o dicionário. O caso especial <em>KwKwK</em>
+(código recebido ainda não existe no dicionário do leitor) é tratado explicitamente.</p>
+
+<h3>20.5 Verificação de Integridade</h3>
+<p>O <code>CompressaoService</code> executa uma verificação <em>round-trip</em> antes de gravar
+o arquivo: comprime o pacote → descomprime → compara byte a byte com <code>Arrays.equals()</code>.
+O campo <code>integridadeOk</code> é retornado pela API e exibido no front-end.</p>
+
+<h3>20.6 Resultados Medidos</h3>
+<table>
+  <tr><th>Algoritmo</th><th>Tamanho original</th><th>Tamanho comprimido</th><th>Taxa</th><th>Razão</th></tr>
+  <tr><td>Huffman</td><td>8.874 bytes</td><td>5.073 bytes</td><td><strong>42,83 %</strong></td><td>1,75 : 1</td></tr>
+  <tr><td>LZW</td><td>8.874 bytes</td><td>4.269 bytes</td><td><strong>51,89 %</strong></td><td>2,08 : 1</td></tr>
+</table>
+<p>Base de medição: 22 arquivos em <code>./dados/</code> — 5 usuários, 10 alimentos,
+6 refeições, 15 consumos, 10 favoritos e todos os índices (Hash + B+). Integridade: ✓ OK em ambos.</p>
+
+<h3>20.7 Integração com o Sistema</h3>
+<ul>
+  <li><strong>API REST:</strong> <code>GET /api/backup</code> (status), <code>POST /api/backup/huffman</code>,
+  <code>POST /api/backup/lzw</code>, <code>GET /api/backup/download/{algo}</code>,
+  <code>POST /api/backup/restaurar/{algo}</code>.</li>
+  <li><strong>Front-end:</strong> aba <em>Backup &amp; Compressão</em> com geração, download, restauração
+  e exibição da taxa em tempo real. Aba <em>Formulário Fase 4</em> preenchida automaticamente.</li>
+  <li><strong>Console:</strong> opção <code>5) Backup / Compressão</code> no menu de <code>ConsoleApp</code>.</li>
+  <li><strong>Arquivos gerados:</strong> <code>./backups/nutritrack_huffman.huff</code> e
+  <code>./backups/nutritrack_lzw.lzw</code>.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>21. Referências</h2>
 
 <ol class="referencias">
   <li>ZIVIANI, N. <em>Projeto de Algoritmos com Implementações em Java e C++</em>. 3ª ed. Cengage Learning, 2010.</li>

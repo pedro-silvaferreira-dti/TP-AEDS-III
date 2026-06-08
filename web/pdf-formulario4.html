@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>NutriTrack — Formulário de Projeto (Fase 4)</title>
+  <style>
+    @page { size: A4; margin: 2cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 21cm; margin: 0 auto; padding: 1.5cm; background: #fff; }
+
+    .titulo { text-align: center; margin-bottom: 0.5em; }
+    .titulo h1 { font-size: 16pt; margin-bottom: 0.3em; }
+    .titulo .subtitulo { font-size: 13pt; font-style: italic; margin-bottom: 0.8em; }
+    .autores { text-align: center; font-size: 11pt; margin-bottom: 1.5em; }
+    .autores p { margin: 0.15em 0; }
+    .linha-divisor { border: none; border-top: 2px solid #1a3d6b; margin: 1.2em 0; }
+
+    h2 { font-size: 14pt; margin-top: 1.6em; margin-bottom: 0.5em; color: #1a3d6b; page-break-after: avoid; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    h3 { font-size: 12pt; margin-top: 1em; margin-bottom: 0.4em; page-break-after: avoid; }
+
+    p, li { text-align: justify; margin-bottom: 0.5em; }
+    ul, ol { margin-left: 2em; margin-bottom: 0.8em; }
+
+    .pergunta {
+      background: #e8f0fb;
+      border-left: 5px solid #1a3d6b;
+      padding: 8px 14px;
+      margin: 1.4em 0 0.4em;
+      font-weight: bold;
+      font-size: 12pt;
+      page-break-after: avoid;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 11pt; page-break-inside: avoid; }
+    th, td { border: 1px solid #555; padding: 5px 10px; text-align: left; vertical-align: top; }
+    th { background: #d6e4f0; font-weight: bold; }
+    tr:nth-child(even) td { background: #f7faff; }
+
+    code { font-family: 'Courier New', monospace; font-size: 10pt; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+    pre  { background: #f4f4f4; border: 1px solid #ddd; padding: 10px; border-radius: 4px; font-size: 9.5pt; margin: 0.5em 0 1em; white-space: pre-wrap; word-wrap: break-word; page-break-inside: avoid; }
+
+    .destaque { background: #e6f4ea; border-left: 4px solid #2e7d32; padding: 8px 14px; margin: 0.8em 0; border-radius: 0 4px 4px 0; }
+    .destaque strong { color: #1b5e20; }
+
+    .nota { font-size: 10pt; color: #444; font-style: italic; margin-top: 0.3em; }
+
+    .checklist { list-style: none; margin-left: 0; }
+    .checklist li::before { content: "✓  "; color: #2e7d32; font-weight: bold; }
+
+    .rodape { font-size: 9.5pt; color: #555; text-align: center; margin-top: 2em; border-top: 1px solid #ccc; padding-top: 0.6em; }
+  </style>
+</head>
+<body>
+
+<!-- CABEÇALHO -->
+<div class="titulo">
+  <h1>Formulário de Projeto — Fase 4</h1>
+  <p class="subtitulo">NutriTrack — Compressão de Dados com Huffman e LZW</p>
+</div>
+
+<div class="autores">
+  <p><strong>Componentes do Grupo:</strong></p>
+  <p>Pedro Augusto Silva Ferreira &nbsp;·&nbsp; Luis Felipe Almeida Rodrigues</p>
+  <p>Pontifícia Universidade Católica de Minas Gerais — ICEI</p>
+  <p>Algoritmos e Estruturas de Dados III — 2026</p>
+</div>
+
+<hr class="linha-divisor" />
+
+<!-- CHECKLIST DE REQUISITOS -->
+<h2>Checklist de Requisitos Atendidos</h2>
+<ul class="checklist">
+  <li>Compressão obrigatória sobre <strong>todos</strong> os arquivos de dados (<code>./dados/</code>)</li>
+  <li>Resultado em <strong>arquivo único compactado</strong> — funciona como backup completo</li>
+  <li>Compactação <strong>exclusivamente a nível de arquivo</strong> (sem dependência de bibliotecas externas de compressão)</li>
+  <li>Algoritmo <strong>Huffman</strong> implementado do zero em <code>app.compression.Huffman</code></li>
+  <li>Algoritmo <strong>LZW</strong> implementado do zero em <code>app.compression.LZW</code></li>
+  <li>Verificação de <strong>integridade</strong> automática (round-trip: comprimir → descomprimir → comparar byte a byte)</li>
+</ul>
+
+<!-- QUESTÃO 1 -->
+<h2>1. Taxa de Compressão — Algoritmo de Huffman</h2>
+
+<div class="destaque">
+  <strong>Método:</strong> Codificação por prefixos de comprimento variável (árvore de Huffman). A tabela de frequências de cada byte é gravada no cabeçalho do fluxo comprimido para reconstrução determinística da árvore na descompressão.
+</div>
+
+<table>
+  <thead>
+    <tr><th>Item</th><th>Valor</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>a) Tamanho do arquivo original</strong><br><span class="nota">(pacote TAR com os 22 arquivos de <code>./dados/</code>)</span></td>
+      <td><strong>8.874 bytes</strong> (~8,7 KB)</td>
+    </tr>
+    <tr>
+      <td><strong>b) Tamanho do arquivo comprimido</strong><br><span class="nota">(<code>./backups/nutritrack_huffman.huff</code>)</span></td>
+      <td><strong>5.073 bytes</strong> (~5,0 KB)</td>
+    </tr>
+    <tr>
+      <td><strong>c) Cálculo da taxa de compressão</strong></td>
+      <td>
+        <code>taxa = (1 − comprimido / original) × 100</code><br>
+        <code>taxa = (1 − 5073 / 8874) × 100</code><br>
+        <strong>taxa ≈ 42,83 %</strong><br>
+        <span class="nota">Razão original:comprimido = <strong>1,75 : 1</strong></span>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>d) Interpretação</strong></td>
+      <td>
+        O Huffman atribui códigos de tamanho variável inversamente proporcionais à frequência de cada byte.
+        Como os arquivos <code>.db</code> contêm muitos bytes de preenchimento (lápide <code>0x20</code>,
+        espaços livres, campos fixos e zeros de padding), a distribuição de frequências é muito enviesada,
+        favorecendo o algoritmo. Ele atinge a <em>entropia de ordem 0</em> (símbolo a símbolo), mas
+        não captura redundâncias em <em>sequências</em> repetidas — razão pela qual o LZW superou-o
+        neste caso.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- QUESTÃO 2 -->
+<h2>2. Taxa de Compressão — Algoritmo de LZW</h2>
+
+<div class="destaque">
+  <strong>Método:</strong> Dicionário adaptativo (Lempel–Ziv–Welch) com códigos de 16 bits. O dicionário começa com as 256 entradas de byte único e cresce dinamicamente até 65.536 entradas; compressor e descompressor param exatamente no mesmo ponto, garantindo sincronismo.
+</div>
+
+<table>
+  <thead>
+    <tr><th>Item</th><th>Valor</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>a) Tamanho do arquivo original</strong><br><span class="nota">(mesmo pacote TAR com os 22 arquivos de <code>./dados/</code>)</span></td>
+      <td><strong>8.874 bytes</strong> (~8,7 KB)</td>
+    </tr>
+    <tr>
+      <td><strong>b) Tamanho do arquivo comprimido</strong><br><span class="nota">(<code>./backups/nutritrack_lzw.lzw</code>)</span></td>
+      <td><strong>4.269 bytes</strong> (~4,2 KB)</td>
+    </tr>
+    <tr>
+      <td><strong>c) Cálculo da taxa de compressão</strong></td>
+      <td>
+        <code>taxa = (1 − comprimido / original) × 100</code><br>
+        <code>taxa = (1 − 4269 / 8874) × 100</code><br>
+        <strong>taxa ≈ 51,89 %</strong><br>
+        <span class="nota">Razão original:comprimido = <strong>2,08 : 1</strong></span>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>d) Interpretação</strong></td>
+      <td>
+        O LZW constrói um dicionário de <em>sequências</em> recorrentes durante a leitura dos dados.
+        Os arquivos binários <code>.db</code> possuem sequências estruturais repetidas: cabeçalhos
+        fixos, blocos de bytes nulos (campos <code>long</code> zerados), strings UTF-8 comuns e
+        padrões de índice. O LZW substitui essas sequências inteiras por um único código de 16 bits,
+        capturando redundâncias que o Huffman ignora por tratar cada byte de forma independente.
+        Por isso, o LZW alcançou taxa <strong>9,1 pontos percentuais superior</strong> ao Huffman
+        neste conjunto de dados.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="destaque" style="margin-top:1em;">
+  <strong>Comparativo direto:</strong>
+  <table style="margin-top:8px;">
+    <thead>
+      <tr><th>Algoritmo</th><th>Original</th><th>Comprimido</th><th>Taxa</th><th>Razão</th><th>Integridade</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Huffman</td><td>8.874 B</td><td>5.073 B</td>
+        <td><strong>42,83 %</strong></td><td>1,75 : 1</td><td>✓ OK</td>
+      </tr>
+      <tr>
+        <td>LZW</td><td>8.874 B</td><td>4.269 B</td>
+        <td><strong>51,89 %</strong></td><td>2,08 : 1</td><td>✓ OK</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota" style="margin-top:6px;">Valores obtidos com a base de dados de demonstração (<code>seed.ps1</code>) — 22 arquivos em <code>./dados/</code>, 5 usuários, 10 alimentos, 6 refeições, 15 consumos e 10 favoritos.</p>
+</div>
+
+<!-- QUESTÃO 3 -->
+<h2>3. Dificuldades ao Implementar Huffman e LZW — e Como Foram Resolvidas</h2>
+
+<h3>3.1 Gerar um único arquivo compactado com múltiplos arquivos de dados</h3>
+<p>
+  Os dados do sistema estão distribuídos em várias pastas e arquivos (<code>usuario.db</code>,
+  <code>alimento.db</code>, índices <code>.idx.*.db</code>, B+ <code>.idx.bmais.db</code> etc.).
+  O requisito exige <em>um único arquivo compactado</em>.
+</p>
+<p>
+  <strong>Solução:</strong> foi implementado o empacotador <code>app.compression.Backup</code>,
+  que percorre recursivamente <code>./dados/</code> e serializa cada arquivo no formato:
+</p>
+<pre><code>[assinatura: 6 bytes "NTBKP1"]
+[quantidade: int]
+para cada arquivo:
+  [tamanho do nome: short] [nome relativo: UTF-8]
+  [tamanho do conteúdo: long] [conteúdo: byte[]]</code></pre>
+<p>
+  O pacote resultante — um único <code>byte[]</code> — é então comprimido inteiramente
+  por Huffman ou LZW, gerando o arquivo final. A restauração reconstrói a árvore de diretórios
+  com proteção contra <em>path traversal</em>.
+</p>
+
+<h3>3.2 Huffman — persistir a árvore de decodificação</h3>
+<p>
+  Para descomprimir é necessário reconstruir exatamente a mesma árvore de Huffman usada na compressão.
+</p>
+<p>
+  <strong>Solução:</strong> em vez de serializar a árvore (estrutura complexa), o cabeçalho do fluxo
+  grava a <em>tabela de frequências</em> (pares <code>[byte símbolo, long frequência]</code>). Na
+  descompressão, a fila de prioridade reconstrói a árvore de forma determinística — qualquer entrada
+  com a mesma tabela de frequências produz a mesma árvore.
+</p>
+
+<h3>3.3 Huffman — empacotamento de bits (bit-packing)</h3>
+<p>
+  Os códigos de Huffman têm comprimentos variáveis (1 a vários bits) e não se alinham a fronteiras
+  de byte. Gravar um código por byte desperdiçaria todo o ganho.
+</p>
+<p>
+  <strong>Solução:</strong> uso de um <em>bit buffer</em> inteiro que acumula bits e descarrega
+  1 byte sempre que 8 bits são preenchidos. O último byte é completado com zeros à direita
+  (<em>padding</em>). Na descompressão, o número exato de bytes originais é registrado no cabeçalho
+  (<code>tamanhoOriginal: int</code>), impedindo a leitura dos bits de padding.
+</p>
+
+<h3>3.4 Huffman — arquivo com um único símbolo distinto</h3>
+<p>
+  Se todos os bytes do arquivo são iguais, a árvore de Huffman tem apenas um nó (a raiz é folha).
+  A geração recursiva de códigos não consegue descer por nenhum ramo e o prefixo fica vazio.
+</p>
+<p>
+  <strong>Solução:</strong> caso o prefixo seja vazio ao chegar em uma folha, o código atribuído
+  é <code>"0"</code> (um único bit). Na descompressão, quando a raiz já é folha, os bytes de saída
+  são preenchidos diretamente com o símbolo da raiz sem percorrer a árvore.
+</p>
+
+<h3>3.5 LZW — sincronizar o dicionário entre compressor e descompressor</h3>
+<p>
+  Compressor e descompressor precisam construir dicionários idênticos passo a passo, sem transmitir
+  o dicionário explicitamente. O caso especial <em>KwKwK</em> ocorre quando o descompressor recebe
+  um código que ainda não existe em seu dicionário (o compressor o criou no passo anterior, mas o
+  descompressor ainda não processou a entrada correspondente).
+</p>
+<p>
+  <strong>Solução:</strong> ao receber um código igual ao próximo a ser inserido no dicionário,
+  o descompressor infere que a nova sequência é a sequência anterior mais seu próprio primeiro byte.
+  O dicionário para de crescer exatamente nos mesmos 65.536 entradas nos dois lados, garantindo
+  sincronismo total sem nenhuma informação extra no fluxo.
+</p>
+
+<h3>3.6 Verificação de integridade</h3>
+<p>
+  Erros na implementação (ex.: off-by-one no bit buffer, código errado no caso <em>KwKwK</em>)
+  são silenciosos — o arquivo é gerado sem erro, mas os dados descomprimidos diferem do original.
+</p>
+<p>
+  <strong>Solução:</strong> o <code>CompressaoService</code> executa uma verificação
+  <em>round-trip</em> automática antes de gravar o arquivo de backup: comprime o pacote,
+  descomprime imediatamente e compara o resultado byte a byte com o original via
+  <code>Arrays.equals()</code>. Se a verificação falhar, o arquivo não é gerado e o campo
+  <code>integridadeOk</code> retorna <code>false</code>. Nos testes realizados, ambos os algoritmos
+  passaram em 100% dos casos, incluindo entradas vazias, mono-símbolo e dados aleatórios.
+</p>
+
+<!-- ASSINATURA -->
+<hr class="linha-divisor" />
+<div class="rodape">
+  NutriTrack — TP AEDS III · Fase 4 · PUC Minas · 2026 &nbsp;|&nbsp;
+  Pedro Augusto Silva Ferreira &amp; Luis Felipe Almeida Rodrigues &nbsp;|&nbsp;
+  Repositório: github.com/taurusluis2004/TP-AEDS-III
+</div>
+
+</body>
+</html>

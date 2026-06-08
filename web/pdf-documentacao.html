@@ -324,7 +324,41 @@ flowchart LR
   <tr><td>Remoção de refeição com consumos</td><td>Cascade automático via índice 1:N.</td></tr>
 </table>
 
-<h2>15. Instruções de Compilação e Execução</h2>
+<h2>15. Fase III — Árvore B+ e Relacionamento N:N</h2>
+
+<h3>13.1 Árvore B+ Genérica</h3>
+<p>Implementada do zero em <code>app.dao.ArvoreBMais&lt;T&gt;</code> com folhas encadeadas, ordem 8 e página de 595 bytes. Persiste em <code>./dados/alimento/alimento.idx.bmais.db</code> e indexa o par <code>(nome, id)</code> do Alimento.</p>
+<p>A consulta <strong>"listar alimentos em ordem alfabética"</strong> (<code>GET /api/alimento/ordenado</code>) percorre a lista encadeada de folhas da B+ sem ordenar nada em memória — a ordem já está materializada nas folhas.</p>
+
+<h3>13.2 Relacionamento N:N — Favoritos</h3>
+<p>O relacionamento entre <code>Usuario</code> e <code>Alimento</code> é implementado pela tabela intermediária <code>Favorito</code> com chave composta <code>(usuarioId, alimentoId)</code> validada antes de cada inserção. Dois índices em Hash Extensível garantem consultas nos dois sentidos:</p>
+<table>
+  <tr><th>Índice</th><th>Chave</th><th>Uso</th></tr>
+  <tr><td><code>favorito_por_usuario</code></td><td><code>usuarioId</code></td><td>favoritos de um usuário</td></tr>
+  <tr><td><code>favorito_por_alimento</code></td><td><code>alimentoId</code></td><td>usuários que favoritaram um alimento</td></tr>
+</table>
+<p>Cascade: remover Usuário ou Alimento remove os Favoritos vinculados e suas entradas em ambos os índices.</p>
+
+<h2>16. Fase IV — Compressão Huffman e LZW</h2>
+
+<h3>14.1 Arquitetura</h3>
+<p>O processo tem dois passos: (1) <strong>empacotamento TAR</strong> — <code>app.compression.Backup</code> reúne todos os arquivos de <code>./dados/</code> num único fluxo serializado; (2) <strong>compressão</strong> do pacote inteiro por Huffman ou LZW, gerando <strong>um único arquivo</strong> em <code>./backups/</code>.</p>
+
+<h3>14.2 Huffman</h3>
+<p>Implementado em <code>app.compression.Huffman</code>. Constrói a árvore via fila de prioridade sobre a tabela de frequências dos bytes. A tabela é gravada no cabeçalho do fluxo para reconstrução determinística na descompressão. Utiliza bit-buffer para empacotamento dos códigos de comprimento variável.</p>
+
+<h3>14.3 LZW</h3>
+<p>Implementado em <code>app.compression.LZW</code>. Dicionário adaptativo com códigos de 16 bits, iniciando com as 256 entradas de byte único. Para de crescer em 65.536 entradas. O caso especial <em>KwKwK</em> é tratado explicitamente.</p>
+
+<h3>14.4 Resultados</h3>
+<table>
+  <tr><th>Algoritmo</th><th>Original</th><th>Comprimido</th><th>Taxa</th><th>Integridade</th></tr>
+  <tr><td>Huffman</td><td>8.874 bytes</td><td>5.073 bytes</td><td><strong>42,83 %</strong></td><td>✓ OK</td></tr>
+  <tr><td>LZW</td><td>8.874 bytes</td><td>4.269 bytes</td><td><strong>51,89 %</strong></td><td>✓ OK</td></tr>
+</table>
+<p>Verificação de integridade (round-trip) automática: comprime → descomprime → <code>Arrays.equals()</code>.</p>
+
+<h2>17. Instruções de Compilação e Execução</h2>
 <p>Requisito: <strong>JDK 17+</strong> instalado e no PATH.</p>
 <pre><code># Compilar
 javac -d out (Get-ChildItem -Recurse src -Filter *.java | % FullName)
@@ -336,7 +370,7 @@ java -cp out app.Servidor
 # OU executar console
 java -cp out app.ConsoleApp</code></pre>
 
-<h2>16. Organização do Projeto</h2>
+<h2>18. Organização do Projeto</h2>
 <pre><code>TP-AEDS-III/
 ├── dados/
 │   ├── usuario/   (usuario.db, usuario.idx.d.db, usuario.idx.c.db)
@@ -359,10 +393,10 @@ java -cp out app.ConsoleApp</code></pre>
 │   └── documentacao.html
 └── README.md</code></pre>
 
-<h2>17. Considerações Finais</h2>
-<p>O NutriTrack atende plenamente aos requisitos das duas fases. A Fase 1 entregou o CRUD completo com persistência binária, lápide e reaproveitamento de espaço. A Fase 2 acrescentou o Hash Extensível como índice primário (acelerando todas as operações por chave) e como índice 1:N (acelerando consultas de relacionamento e habilitando cascade), além de uma camada de transporte HTTP/REST e um front-end SPA. A camada de validação garante a integridade referencial entre as entidades.</p>
+<h2>19. Considerações Finais</h2>
+<p>O NutriTrack atende plenamente aos requisitos das quatro fases. A Fase 1 entregou o CRUD completo com persistência binária, lápide e reaproveitamento de espaço. A Fase 2 acrescentou o Hash Extensível como índice primário e como índice 1:N, além de API REST e front-end SPA. A Fase 3 introduziu a Árvore B+ para consultas ordenadas e o relacionamento N:N com índices bidirecionais. A Fase 4 completou o sistema com compressão Huffman e LZW, gerando um arquivo único de backup com integridade verificada por round-trip.</p>
 
-<h2>18. Referências</h2>
+<h2>20. Referências</h2>
 <ol class="referencias">
   <li>ZIVIANI, N. <em>Projeto de Algoritmos com Implementações em Java e C++</em>. 3ª ed. Cengage Learning, 2010.</li>
   <li>CORMEN, T. H. et al. <em>Introduction to Algorithms</em>. 4th ed. MIT Press, 2022.</li>
